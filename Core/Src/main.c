@@ -23,7 +23,6 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
 
 /* USER CODE END Includes */
 
@@ -312,18 +311,31 @@ void printTimeElapsed()
   printf("%02dh%02dm%02ds\r\n", hours, minutes, seconds);
 }
 
-void blinkShort()
+void blinkOn()
 {
   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, 1);
-  HAL_Delay(DIT);
+  HAL_GPIO_WritePin(SPKR_GPIO_Port, SPKR_Pin, 1);
+}
+
+void blinkOff()
+{
   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, 0);
+  HAL_GPIO_WritePin(SPKR_GPIO_Port, SPKR_Pin, 0);
+}
+
+void blinkShort()
+{
+  // Blink user LED and speaker
+  blinkOn();
+  HAL_Delay(DIT);
+  blinkOff();
 }
 
 void blinkLong()
 {
-  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, 1);
+  blinkOn();
   HAL_Delay(DAH);
-  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, 0);
+  blinkOff();
 }
 
 int blinkChar(char c)
@@ -541,7 +553,7 @@ int main(void)
   MX_USART2_UART_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  //HAL_TIM_PWM_Start_IT(&htim2, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start_IT(&htim2, TIM_CHANNEL_1);
   //HAL_TIM_Base_Start_IT(&htim2);
 
 
@@ -551,7 +563,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   fflush(stdout);
   printf("\r\n\r\n=== MORSE CODE INTERACTIVE TERMINAL ===\r\n");
-  printf("Version: 0.3\r\nUnit length: %dms\r\n", DIT);
+  printf("Version: 1.0\r\nUnit length: %dms\r\n", DIT);
   printf("Decrease unit length with [ key\r\nIncrease unit length with ] key\r\n\r\n");
 
   //setvbuf(stdin, NULL, _IONBF, 0);
@@ -561,7 +573,7 @@ int main(void)
 
   while (1)
   {
-    // Run outer loop until
+    // Inner loop only runs when characters from user are to be output
 	while (rxWrite != rxRead){
       ch = BUF[rxWrite];
       rxWrite = (rxWrite + 1) % RXLEN;
@@ -750,7 +762,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, SPKR_Pin|LD2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
@@ -758,12 +770,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : LD2_Pin */
-  GPIO_InitStruct.Pin = LD2_Pin;
+  /*Configure GPIO pins : SPKR_Pin LD2_Pin */
+  GPIO_InitStruct.Pin = SPKR_Pin|LD2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 }
 
